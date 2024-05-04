@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Weather App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      h1 {
+        margin-top: 30px;
+      }
+
+      form {
+        margin-top: 30px;
+        display: inline-block;
+        text-align: left;
+      }
+
+      input[type="text"] {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      button[type="submit"] {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border-radius: 5px;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+
+      .card {
+        background-color: white;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        margin: 30px auto;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .loading {
+        font-size: 18px;
+        margin: 30px 0;
+      }
+
+      .error {
+        color: red;
+        font-size: 18px;
+        margin: 30px 0;
+      }
+    </style>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Weather App using NodeJS</h1>
+      <form action="/weather" method="get">
+        <input type="text" name="city" placeholder="Enter city name" />
+        <button type="submit">Get Weather</button>
+      </form>
+      <% if (error) { %>  <p class="error"><%= error %></p>
+      <% } else if (weather) { %>
+        <div class="card">
+          <p>
+            <i class="fas fa-thermometer-half"></i>
+            <%=weather.main.temp%>&deg;F
+          </p>
+          <p>
+            <i class="fas fa-cloud"></i>
+            <%=weather.weather[0].main%>
+          </p>
+
+          <p>
+            <i class="fas fa-map-marker-alt"></i>
+            <%=weather.name%>, <%=weather.sys.country%>
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </body>
+</html>
