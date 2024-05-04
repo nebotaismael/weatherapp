@@ -65,29 +65,40 @@
   </head>
   <body>
     <div class="container">
-      <h1>Weather App using NodeJS</h1>
+      <h1>Weather Master - Nebota Ismael</h1>
       <form action="/weather" method="get">
         <input type="text" name="city" placeholder="Enter city name" />
         <button type="submit">Get Weather</button>
       </form>
-      <% if (error) { %>  <p class="error"><%= error %></p>
+      <% if (error) { %>  
+        <p class="error"><%= error %></p>
       <% } else if (weather) { %>
         <div class="card">
           <p>
             <i class="fas fa-thermometer-half"></i>
-            <%=weather.main.temp%>&deg;F
+            Temperature: <%=weather.temperature%>&deg;F
+          </p>
+          <p>
+            <i class="fas fa-tint"></i>
+            Humidity: <%=weather.humidity%>%
+          </p>
+          <p>
+            <i class="fas fa-wind"></i>
+            Wind Speed: <%=weather.windSpeed%> mph
           </p>
           <p>
             <i class="fas fa-cloud"></i>
-            <%=weather.weather[0].main%>
+            Description: <%=weather.description%>
           </p>
-
           <p>
             <i class="fas fa-map-marker-alt"></i>
-            <%=weather.name%>, <%=weather.sys.country%>
+            Location: <%=weather.city%>, <%=weather.country%>
           </p>
         </div>
       <% } %>
+      <form action="/logout" method="get" style="display: inline;">
+        <button type="submit">Logout</button>
+      </form>
     </div>
   </body>
 </html>
