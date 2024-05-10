@@ -4,30 +4,21 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const axios = require("axios");
 const bcrypt = require('bcrypt');
-const app = express();
 const bodyParser = require('body-parser');
 
-// Set the view engine to EJS
+const app = express();
+
 app.set("view engine", "ejs");
-
-// Serve the public folder as static files
 app.use(express.static("public"));
-
-// Use body-parser to handle form data
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Use express-session middleware for managing user sessions
 app.use(session({
   secret: 'secret',
-  resave: false,
-  saveUninitialized: false
+  resave: true,
+  saveUninitialized: true
 }));
-
-// Initialize Passport and use it to manage user authentication state
 app.use(passport.initialize());
 app.use(passport.session());
 
-// In-memory storage for users
 const users = {
   'admin': {
     username: 'admin',
@@ -35,7 +26,6 @@ const users = {
   }
 };
 
-// Define a local strategy for Passport to use for authenticating users
 passport.use(new LocalStrategy(
   function(username, password, done) {
     const user = users[username];
@@ -47,7 +37,6 @@ passport.use(new LocalStrategy(
   }
 ));
 
-// Define how Passport should serialize and deserialize user data
 passport.serializeUser(function(user, done) {
   done(null, user.username);
 });
@@ -56,7 +45,58 @@ passport.deserializeUser(function(username, done) {
   done(null, users[username]);
 });
 
-// Define routes for login, logout and registration
+// Google OAuth2 setup omitted for brevity
+
+const CLIENT_ID = '395265978172-um7nhhj25nphbcf0idtgeej997e03kbd.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
+const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
+
+// Initiates the Google Login flow
+app.get('/auth/google', (req, res) => {
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=profile email`;
+  console.log("Redirecting to Google Login:", url);
+  res.redirect(url);
+});
+
+app.get('/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+
+  try {
+    // Exchange authorization code for access token
+    const { data } = await axios.post('https://oauth2.googleapis.com/token', {
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      code,
+      redirect_uri: REDIRECT_URI,
+      grant_type: 'authorization_code',
+    });
+
+    const { access_token, id_token } = data;
+
+    // Use access_token or id_token to fetch user profile
+    const { data: profile } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    // Save user profile credentials
+    const { email, name } = profile;
+    users[name] = {
+      username: name,
+      passwordHash: bcrypt.hashSync('password', 10) // You might want to replace this with a more secure method
+    };
+    console.log("Google Login successful. User profile saved:", users[email]);
+  
+    
+console.log(users);
+res.redirect('/');
+   
+  } catch (error) {
+    console.error('Error:', error.response.data.error);
+    res.redirect('/login');
+  }
+});
+
+
 app.get('/login', (_req, res) => {
   res.render('login');
 });
@@ -81,10 +121,10 @@ app.post('/register', (req, res) => {
     username,
     passwordHash: bcrypt.hashSync(password, 10)
   };
+  console.log(users);
   res.redirect('/login');
 });
 
-// Ensure that the user is authenticated for all other routes
 app.use((req, res, next) => {
   if (req.isAuthenticated()) {
     next();
@@ -93,7 +133,6 @@ app.use((req, res, next) => {
   }
 });
 
-// Your existing routes go here
 app.get("/", (_req, res) => {
   res.render("index", { weather: null, error: null });
 });
@@ -105,6 +144,7 @@ app.get("/weather", async (req, res) => {
   let weatherData = {};
   let error = null;
   try {
+    console.log("Fetching weather data for city:", city);
     const response = await axios.get(APIUrl);
     const data = response.data;
     weatherData = {
@@ -116,10 +156,67 @@ app.get("/weather", async (req, res) => {
       country: data.sys.country
     };
   } catch (error) {
+    console.error("Error fetching weather data:", error);
     weatherData = null;
     error = "Error, Please try again";
   }
+  console.log("Rendering index page with weather data:", weatherData);
   res.render("index", { weather: weatherData, error });
+});
+
+let blogPosts = [
+  { id: 1, title: "Default Post", content: "This is a default blog post." }
+];
+
+app.get("/blog", (_req, res) => {
+  res.render("blog", { posts: blogPosts });
+});
+
+app.get("/blog/new", (_req, res) => {
+  res.render("new-post");
+});
+
+app.post("/blog", (req, res) => {
+  const { title, content } = req.body;
+  const newPost = { id: blogPosts.length + 1, title, content };
+  blogPosts.push(newPost);
+  res.redirect("/blog");
+});
+
+app.get("/blog/:id", (req, res) => {
+  const post = blogPosts.find(p => p.id === parseInt(req.params.id));
+  if (post) {
+    res.render("post", { post });
+  } else {
+    res.status(404).send("Post not found");
+  }
+});
+
+app.get("/blog/edit/:id", (req, res) => {
+  const post = blogPosts.find(p => p.id === parseInt(req.params.id));
+  if (post) {
+    res.render("edit-post", { post });
+  } else {
+    res.status(404).send("Post not found");
+  }
+});
+
+app.post("/blog/edit/:id", (req, res) => {
+  const { title, content } = req.body;
+  const postId = parseInt(req.params.id);
+  const postIndex = blogPosts.findIndex(p => p.id === postId);
+  if (postIndex !== -1) {
+    blogPosts[postIndex] = { ...blogPosts[postIndex], title, content };
+    res.redirect("/blog");
+  } else {
+    res.status(404).send("Post not found");
+  }
+});
+
+app.post("/blog/delete/:id", (req, res) => {
+  const postId = parseInt(req.params.id);
+  blogPosts = blogPosts.filter(p => p.id !== postId);
+  res.redirect("/blog");
 });
 
 const port = process.env.PORT || 3000;

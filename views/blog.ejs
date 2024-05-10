@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blog</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9;">
+  <div style="max-width: 800px; margin: 40px auto; padding: 20px; background-color: white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+    <h1 style="color: #333; text-align: center;">Blog Posts</h1>
+    <% posts.forEach(function(post) { %>
+      <div style="margin-bottom: 30px; padding: 20px; border-bottom: 1px solid #eee;">
+        <h2 style="color: #0077cc;"><%= post.title %></h2>
+        <p><%= post.content %></p>
+        <a href="/blog/edit/<%= post.id %>" style="color: #f44336; text-decoration: none;">Edit</a>
+        <form action="/blog/delete/<%= post.id %>" method="post" style="display: inline;">
+          <button type="submit" style="border: none; padding: 8px 16px; background-color: #f44336; color: white; cursor: pointer; border-radius: 4px; margin-left: 10px;">Delete</button>
+        </form>
+      </div>
+    <% }) %>
+   
+    <a href="/blog/new" style="display: inline-block; padding: 10px 20px; background-color: #4caf50; color: white; text-decoration: none; border-radius: 4px;">Add New Post</a>
+   <br>
+   <br> <a href ="/weather">Go to weather</a>
+  </div>
+
+</body>
+</html>
